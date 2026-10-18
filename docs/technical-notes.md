@@ -136,8 +136,6 @@ Recorded so they are not attempted again.
 
 ## 7. Interaction with USB
 
-Things worth knowing when debugging side effects:
-
 * The USB function set is what the host sees. With `sys.usb.config=adb` the gadget
   exposes no MTP interface, so "File transfer" is unavailable by design; it needs
   `mtp` in the set (e.g. `persist.sys.usb.config=mtp,adb`).
