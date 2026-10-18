@@ -1,0 +1,12 @@
+# editor / OS artifacts
+*.swp
+*~
+*.bak
+*.orig
+*.rej
+.DS_Store
+
+# runtime logs (the device's own log.txt is rotated on-device and never synced here)
+*.log
+log.txt
+nohup.out
