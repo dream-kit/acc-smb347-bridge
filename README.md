@@ -214,18 +214,29 @@ Stops the bridge, removes `/data/adb/acc-i2c` and the boot script, clears
 
 ## 10. Porting to another device
 
-Find the charger's bus and register, confirm the register behaviour, then adjust the
-constants at the top of `src/chgbridge/main.go` and `src/chgctl/main.go`.
+Push the helper to the target device to identify its charger, then adjust the
+constants at the top of `src/chgbridge/main.go` and `src/chgctl/main.go`:
 
 ```sh
-su -c 'ls -l /sys/bus/i2c/devices/ | grep -iE "charg|smb"'   # bus + address
-su -c 'dmesg | grep -i smb347'                               # driver is talking to it
-su -c '/data/adb/acc-i2c/chgctl r 0x30'                      # COMMAND_A
-su -c '/data/adb/acc-i2c/chgctl r 0x3d'                      # STATUS_C
-su -c '/data/adb/acc-i2c/chgctl w 0x30 0x80'                 # does charging stop?
-cat /sys/class/power_supply/battery/current_now
-su -c '/data/adb/acc-i2c/chgctl w 0x30 0x82'                 # restore
+adb push dist/chgctl /data/local/tmp/
+adb shell su -c 'chmod 755 /data/local/tmp/chgctl'
 ```
+
+```sh
+# bus + address of the charger IC
+su -c 'ls -l /sys/bus/i2c/devices/ | grep -iE "charg|smb"'
+su -c 'dmesg | grep -i smb347'                     # driver is bound and talking
+
+# set the bus and slave address in src/chgctl/main.go, rebuild, push, then:
+su -c '/data/local/tmp/chgctl r 0x30'              # COMMAND_A
+su -c '/data/local/tmp/chgctl r 0x3d'              # STATUS_C
+su -c '/data/local/tmp/chgctl w 0x30 0x80'         # charging stops?
+cat /sys/class/power_supply/battery/current_now
+su -c '/data/local/tmp/chgctl w 0x30 0x82'         # restore
+```
+
+Find the register whose bit toggles charging, and the pair of values the stock
+driver itself uses, then rebuild with `./build.sh`.
 
 Keep the protection and rate-limit rules, and keep the `battery/update` poke unless
 the target driver refreshes `current_now` promptly on its own.
